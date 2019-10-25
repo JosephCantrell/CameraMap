@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">CameraMap</string>
+    <string name="button_map">View Map</string>
+    <string name="button_take_photo">Take Photo</string>
+</resources>
