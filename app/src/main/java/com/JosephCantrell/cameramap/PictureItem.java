@@ -7,4 +7,6 @@ public class PictureItem {
     public String date;
     public String lat;
     public String lon;
+    public String lonRef;
+    public String latRef;
 }

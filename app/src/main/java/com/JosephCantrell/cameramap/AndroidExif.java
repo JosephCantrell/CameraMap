@@ -42,10 +42,31 @@ public class AndroidExif{
         }
     }
 
+    public String getLatRef(String file){
+        try{
+            ExifInterface exifInterface = new ExifInterface(file);
+            return exifInterface.getAttribute(ExifInterface.TAG_GPS_LATITUDE_REF);
+        }
+        catch(IOException e){
+            return "False";
+        }
+    }
+
+
     public String getLon(String file){
         try{
             ExifInterface exifInterface = new ExifInterface(file);
             return exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE);
+        }
+        catch(IOException e){
+            return "False";
+        }
+    }
+
+    public String getLonRef(String file){
+        try{
+            ExifInterface exifInterface = new ExifInterface(file);
+            return exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF);
         }
         catch(IOException e){
             return "False";

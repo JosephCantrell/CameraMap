@@ -67,10 +67,6 @@
         android:layout_weight="8"
         android:weightSum="10">
 
-
-        <include layout="@layout/content_scrolling"/>
-
-
         <TextView
             android:layout_width="0dp"
             android:layout_height="match_parent"

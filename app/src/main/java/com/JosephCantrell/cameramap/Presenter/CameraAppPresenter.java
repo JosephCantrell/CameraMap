@@ -2,6 +2,7 @@ package com.JosephCantrell.cameramap.Presenter;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.util.Log;
@@ -16,6 +17,7 @@ import androidx.core.content.ContextCompat;
 import com.JosephCantrell.cameramap.Model.CameraModel;
 import com.JosephCantrell.cameramap.R;
 import com.JosephCantrell.cameramap.View.MainActivity;
+import com.JosephCantrell.cameramap.View.MapsActivity;
 
 import java.io.File;
 
@@ -24,10 +26,12 @@ public class CameraAppPresenter extends AppCompatActivity {
     private static final int CAMERA_PERMISSION_CODE = 100;
     private static final int WRITE_PERMISSION_CODE = 101;
     private static final int READ_PERMISSION_CODE = 102;
+    private static final int ACCESS_FINE_LOCATION_CODE = 103;
 
     private int permissionCount;
 
     private MainActivity view;
+    private MapsActivity mapView;
     private CameraModel model;
 
     private static final String TAG = "Camera Presenter";
@@ -35,6 +39,7 @@ public class CameraAppPresenter extends AppCompatActivity {
     public CameraAppPresenter(MainActivity view){
         this.view = view;
         this.model = new CameraModel();
+        this.mapView = new MapsActivity();
     }
 
     public void onCreate(){
@@ -61,16 +66,13 @@ public class CameraAppPresenter extends AppCompatActivity {
     public void receiveButtonInfo(View v){
         switch (v.getId()){
             case R.id.button_take_photo: {
-                checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, WRITE_PERMISSION_CODE);
-                checkPermission(Manifest.permission.READ_EXTERNAL_STORAGE, READ_PERMISSION_CODE);
-                checkPermission(Manifest.permission.CAMERA, CAMERA_PERMISSION_CODE);
-                if(permissionCount == 3)
+                checkPermission();
+                if(permissionCount == 4)
                     view.captureImage();
                 break;
 
             }
             case R.id.button_map:{
-                model.getAllPhotos();
                 break;
             }
             default:
@@ -78,13 +80,41 @@ public class CameraAppPresenter extends AppCompatActivity {
         }
     }
 
-    public void checkPermission(String permission, int requestCode){
-        if(ContextCompat.checkSelfPermission(view,permission) == PackageManager.PERMISSION_DENIED){
-            ActivityCompat.requestPermissions(view, new String[] {permission}, requestCode);
+    public void checkPermission(){
+        permissionCount = 0;
+        if(ContextCompat.checkSelfPermission(view,Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
+            ActivityCompat.requestPermissions(view, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_PERMISSION_CODE);
         }
         else{
             //Toast.makeText(view, "Permission already grated", Toast.LENGTH_SHORT).show();
-            Log.i(TAG,permission + " already granted");
+            Log.i(TAG,Manifest.permission.WRITE_EXTERNAL_STORAGE + " already granted");
+            permissionCount++;
+        }
+
+        if(ContextCompat.checkSelfPermission(view,Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED){
+            ActivityCompat.requestPermissions(view, new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, READ_PERMISSION_CODE);
+        }
+        else{
+            //Toast.makeText(view, "Permission already grated", Toast.LENGTH_SHORT).show();
+            Log.i(TAG,Manifest.permission.READ_EXTERNAL_STORAGE + " already granted");
+            permissionCount++;
+        }
+
+        if(ContextCompat.checkSelfPermission(view,Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED){
+            ActivityCompat.requestPermissions(view, new String[] {Manifest.permission.CAMERA}, CAMERA_PERMISSION_CODE);
+        }
+        else{
+            //Toast.makeText(view, "Permission already grated", Toast.LENGTH_SHORT).show();
+            Log.i(TAG,Manifest.permission.CAMERA+ " already granted");
+            permissionCount++;
+        }
+
+        if(ContextCompat.checkSelfPermission(view,Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_DENIED){
+            ActivityCompat.requestPermissions(view, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, ACCESS_FINE_LOCATION_CODE);
+        }
+        else{
+            //Toast.makeText(view, "Permission already grated", Toast.LENGTH_SHORT).show();
+            Log.i(TAG,Manifest.permission.ACCESS_FINE_LOCATION + " already granted");
             permissionCount++;
         }
     }

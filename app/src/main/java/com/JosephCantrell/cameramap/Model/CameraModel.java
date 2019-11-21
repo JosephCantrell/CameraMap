@@ -45,7 +45,8 @@ public class CameraModel extends AppCompatActivity {
     }
 
     public File getStorageDirectory(){
-        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "/CameraMap");
+        //File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "/CameraMap");
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/DCIM/Camera/CameraMap");
 
         return mediaStorageDir;
     }
@@ -74,9 +75,9 @@ public class CameraModel extends AppCompatActivity {
                 if(imageFile.exists()){
                     Bitmap myBM = BitmapFactory.decodeFile(imageFile.getAbsolutePath());    // Getting the bitmap for the file
 
-                    ImageView myImage = (ImageView) findViewById(R.id.item_image_view);
+                    //ImageView myImage = (ImageView) findViewById(R.id.item_image_view);
 
-                    myImage.setImageBitmap(myBM);
+                    //myImage.setImageBitmap(myBM);
                 }
         }
     }
@@ -103,75 +104,4 @@ public class CameraModel extends AppCompatActivity {
     public static Uri getOutputMediaFileUri(Context context, File file){
         return FileProvider.getUriForFile(context, context.getPackageName() + ".provider", file);
     }
-
-
-    /*private void dispatchTakePictureIntent(){
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
-        if(getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)){            // If we have a camera
-            Log.i(TAG,"In dispatchTakePictureIntent");
-            File photoFile = null;
-            try{
-                photoFile = createImageFile();
-                Log.i(TAG, "Creating photoFile");
-                mCurrentPhotoPath = photoFile.getAbsolutePath();
-            } catch (IOException ex){
-                Log.v(TAG, "Can't create file to take the picture");
-                //Toast.makeText(this, "Please check SD card! Image shot is impossible!", Toast.LENGTH_LONG);
-            }
-
-            if(photoFile != null){
-                Log.i(TAG, "In photoFile !Null: "+photoFile);
-
-                file = Uri.fromFile(photoFile);
-
-                Log.i(TAG, "URI: " + file);
-
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, file);
-
-
-                //if(takePictureIntent.resolveActivity(getPackageManager())!= null)
-                    startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
-            }
-        }
-    }
-
-    protected void onActivityResult(int requestCode, int resultCode, Intent data){
-        if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK){
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            //mImageView.setImageBitmap(imageBitmap); // setting the output
-        }
-    }
-
-    private File createImageFile() throws IOException{
-        File folder = Environment.getExternalStoragePublicDirectory("/CameraMap");// the file path
-
-        //if it doesn't exist the folder will be created
-        if(!folder.exists()) {
-            folder.mkdir();
-            Log.i(TAG, "Created Directory: "+folder);
-        }
-
-        Log.i(TAG, "Directory: " +folder);
-
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "CameraMap_" + timeStamp + "_";
-        File image_file = null;
-
-
-        Log.i(TAG, "Pre Try");
-        try {
-            image_file = File.createTempFile(imageFileName,".jpg",folder);
-            Log.i(TAG, "Image file: "+image_file);
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.i(TAG, "Error");
-        }
-
-        mCurrentPhotoPath = image_file.getAbsolutePath();
-        return image_file;
-    }*/
-
-
 }

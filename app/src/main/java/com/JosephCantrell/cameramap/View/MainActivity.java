@@ -6,44 +6,39 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.location.Location;
+import android.location.LocationManager;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.JosephCantrell.cameramap.ItemFragment;
-import com.JosephCantrell.cameramap.MyItemRecyclerViewAdapter;
-import com.JosephCantrell.cameramap.PictureItem;
 import com.JosephCantrell.cameramap.Presenter.CameraAppPresenter;
 import com.JosephCantrell.cameramap.R;
 
-import static com.JosephCantrell.cameramap.PictureContent.loadSavedImages;
-import static com.JosephCantrell.cameramap.PictureContent.loadImage;
-import static com.JosephCantrell.cameramap.PictureContent.deleteSavedImages;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
+import java.text.DecimalFormat;
 
-import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
-
-public class MainActivity extends AppCompatActivity
-        implements ItemFragment.OnListFragmentInteractionListener{
+public class MainActivity extends AppCompatActivity {
 
 
     CameraAppPresenter presenter = new CameraAppPresenter(this);
     static final int REQUEST_TAKE_PHOTO = 1;
-    private RecyclerView recyclerView;
-    private RecyclerView.Adapter mAdapter;
     String imageStoragePath;
     String TAG = "VIEW";
     private ImageView image;
+    private File imageName;
 
 
     @Override
@@ -51,43 +46,30 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //if(mAdapter == null){
-            Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.main_fragment);
-            //Log.i(TAG, "Frag: " + currentFragment );
-            recyclerView = (RecyclerView) currentFragment.getView();
-            mAdapter = ((RecyclerView) currentFragment.getView()).getAdapter();
-            DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(),
-                    DividerItemDecoration.VERTICAL);
-            recyclerView.addItemDecoration(dividerItemDecoration);
-            recyclerView.setAdapter(mAdapter);
-        //}
     }
 
-    protected void onResume(){
+    protected void onResume() {
         super.onResume();
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                loadSavedImages(presenter.getDir());
-                mAdapter.notifyDataSetChanged();
-            }
-        });
     }
 
-    public void onClick(View v){
-        presenter.receiveButtonInfo(v);
+    public void onClick(View v) {
+        if (v.getId() == R.id.button_map) {
+            Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+            startActivity(intent);
+        } else
+            presenter.receiveButtonInfo(v);
     }
 
 
-    public void captureImage(){
+    public void captureImage() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
         File file = presenter.getOutputMediaFile();
+        imageName = file;
 
-        Log.i(TAG,"file info: " + file);
+        Log.i(TAG, "file info: " + file);
 
-        if(file != null){
+        if (file != null) {
             imageStoragePath = file.getAbsolutePath();
         }
 
@@ -101,11 +83,22 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    protected void onActivityResult(int requestCode, int resultCode, Intent data){
-        if(requestCode == REQUEST_TAKE_PHOTO) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_TAKE_PHOTO) {
             if (resultCode == RESULT_OK) {
                 Toast.makeText(getApplicationContext(), "Picture Captured successfully", Toast.LENGTH_SHORT).show();
                 // Launch back to the main activity
+                LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+                Location location = (Location) lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+                double longitude = location.getLongitude();
+                Log.i(TAG, "GPS Longitude: "+longitude);
+                double latitude = location.getLatitude();
+                Log.i(TAG, "GPS Latitude: "+latitude);
+                geoTag(imageName.getAbsolutePath(),latitude, longitude);
             }
             else if(resultCode == RESULT_CANCELED){
                 Toast.makeText(getApplicationContext(), "User cancelled image capture", Toast.LENGTH_SHORT).show();
@@ -116,8 +109,50 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void onListFragmentInteraction(PictureItem item){
-        // Item in the gallery has been clicked on.
+
+    public void geoTag(String filename, double latitude, double longitude){
+        ExifInterface exif;
+
+        try {
+
+            exif = new ExifInterface(filename);
+
+            exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, Location.convert(latitude, Location.FORMAT_SECONDS));
+            exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, Location.convert(longitude, Location.FORMAT_SECONDS));
+
+
+            if (latitude > 0) {
+                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, "N");
+            } else {
+                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, "S");
+            }
+
+            if (longitude > 0) {
+                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, "E");
+            } else {
+                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, "W");
+            }
+
+
+            exif.saveAttributes();
+            Log.i("ATTRIBUTES", "Saved attributes");
+            if(TextUtils.isEmpty(exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE))){
+                exif.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, "94/1,9/1,439667/10000");
+                Toast.makeText(this,"Error occurred. Longitude set to default", Toast.LENGTH_SHORT);
+                exif.saveAttributes();
+            }
+            if(TextUtils.isEmpty(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE))){
+                exif.setAttribute(ExifInterface.TAG_GPS_LATITUDE, "36/1,6/1,6929/10000");
+                Toast.makeText(this,"Error occurred. Latitude set to default", Toast.LENGTH_SHORT);
+                exif.saveAttributes();
+            }
+            Log.i(TAG,"long "+exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE));
+            Log.i(TAG, "lat "+exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE));
+
+
+        } catch (IOException e) {
+            Log.e("PictureActivity", e.getLocalizedMessage());
+        }
     }
 
 
